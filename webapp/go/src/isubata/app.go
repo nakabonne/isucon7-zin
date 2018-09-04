@@ -682,6 +682,11 @@ func postProfile(c echo.Context) error {
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 
+func existFile(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}
+
 func getIcon(c echo.Context) error {
 	var name string
 	var data []byte
@@ -692,6 +697,11 @@ func getIcon(c echo.Context) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	if !existFile(name) {
+		f, _ := os.Create(name)
+		f.Write(data)
 	}
 
 	mime := ""
