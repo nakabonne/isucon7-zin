@@ -399,6 +399,14 @@ func jsonifyMessages(messages []Message) ([]map[string]interface{}, error) {
 	return response, nil
 }
 
+func reverseMessage(messages []Message) []Message {
+	rev := make([]Message, 0, len(messages))
+	for i := len(messages) - 1; i >= 0; i-- {
+		rev = append(rev, messages[i])
+	}
+	return rev
+}
+
 func getMessage(c echo.Context) error {
 	userID := sessUserID(c)
 	if userID == 0 {
@@ -427,11 +435,7 @@ func getMessage(c echo.Context) error {
 	// 	}
 	// 	response = append(response, r)
 	// }
-	rev := make([]Message, 0, len(messages))
-	for i := len(messages) - 1; i >= 0; i-- {
-		rev = append(rev, messages[i])
-	}
-	response, err := jsonifyMessages(rev)
+	response, err := jsonifyMessages(reverseMessage(messages))
 	if err != nil {
 		return err
 	}
@@ -571,7 +575,7 @@ func getHistory(c echo.Context) error {
 	// 	}
 	// 	mjson = append(mjson, r)
 	// }
-	response, err := jsonifyMessages(messages)
+	response, err := jsonifyMessages(reverseMessage(messages))
 	if err != nil {
 		return err
 	}
