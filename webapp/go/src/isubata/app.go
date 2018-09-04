@@ -350,20 +350,48 @@ func postMessage(c echo.Context) error {
 	return c.NoContent(204)
 }
 
-func jsonifyMessage(m Message) (map[string]interface{}, error) {
-	u := User{}
-	err := db.Get(&u, "SELECT name, display_name, avatar_icon FROM user WHERE id = ?",
-		m.UserID)
+// func jsonifyMessage(m Message) (map[string]interface{}, error) {
+// 	u := User{}
+// 	err := db.Get(&u, "SELECT name, display_name, avatar_icon FROM user WHERE id = ?",
+// 		m.UserID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	r := make(map[string]interface{})
+// 	r["id"] = m.ID
+// 	r["user"] = u
+// 	r["date"] = m.CreatedAt.Format("2006/01/02 15:04:05")
+// 	r["content"] = m.Content
+// 	return r, nil
+// }
+func jsonifyMessages(messages []Message) ([]map[string]interface{}, error) {
+	// get users from db
+	var users []*User
+	userIDs := make([]int64, len(messages))
+	for i, m := range messages {
+		userIDs[i] = m.UserID
+	}
+	err := db.Get(&users, "SELECT name, display_name, avatar_icon FROM user WHERE id = ?",
+		userIDs)
 	if err != nil {
 		return nil, err
 	}
-
-	r := make(map[string]interface{})
-	r["id"] = m.ID
-	r["user"] = u
-	r["date"] = m.CreatedAt.Format("2006/01/02 15:04:05")
-	r["content"] = m.Content
-	return r, nil
+	// make response
+	response := make([]map[string]interface{}, 0, len(messages))
+	userMap := map[int64]*User{}
+	for _, u := range users {
+		userMap[u.ID] = u
+	}
+	for _, m := range messages {
+		r := make(map[string]interface{})
+		r["id"] = m.ID
+		r["user"] = userMap[m.UserID]
+		r["date"] = m.CreatedAt.Format("2006/01/02 15:04:05")
+		r["content"] = m.Content
+		response = append(response, r)
+	}
+	return response, nil
 }
 
 func getMessage(c echo.Context) error {
@@ -386,14 +414,18 @@ func getMessage(c echo.Context) error {
 		return err
 	}
 
-	response := make([]map[string]interface{}, 0)
-	for i := len(messages) - 1; i >= 0; i-- {
-		m := messages[i]
-		r, err := jsonifyMessage(m)
-		if err != nil {
-			return err
-		}
-		response = append(response, r)
+	// response := make([]map[string]interface{}, 0)
+	// for i := len(messages) - 1; i >= 0; i-- {
+	// 	m := messages[i]
+	// 	r, err := jsonifyMessage(m)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	response = append(response, r)
+	// }
+	response, err := jsonifyMessages(messages)
+	if err != nil {
+		return err
 	}
 
 	if len(messages) > 0 {
@@ -523,13 +555,17 @@ func getHistory(c echo.Context) error {
 		return err
 	}
 
-	mjson := make([]map[string]interface{}, 0)
-	for i := len(messages) - 1; i >= 0; i-- {
-		r, err := jsonifyMessage(messages[i])
-		if err != nil {
-			return err
-		}
-		mjson = append(mjson, r)
+	// mjson := make([]map[string]interface{}, 0)
+	// for i := len(messages) - 1; i >= 0; i-- {
+	// 	r, err := jsonifyMessage(messages[i])
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	mjson = append(mjson, r)
+	// }
+	response, err := jsonifyMessages(messages)
+	if err != nil {
+		return err
 	}
 
 	channels := []ChannelInfo{}
@@ -541,7 +577,7 @@ func getHistory(c echo.Context) error {
 	return c.Render(http.StatusOK, "history", map[string]interface{}{
 		"ChannelID": chID,
 		"Channels":  channels,
-		"Messages":  mjson,
+		"Messages":  response,
 		"MaxPage":   maxPage,
 		"Page":      page,
 		"User":      user,
