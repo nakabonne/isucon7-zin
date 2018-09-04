@@ -700,7 +700,7 @@ func getIcon(c echo.Context) error {
 	}
 
 	if !existFile(name) {
-		f, _ := os.Create(name)
+		f, _ := os.Create("../public/icons/"+name)
 		f.Write(data)
 	}
 
