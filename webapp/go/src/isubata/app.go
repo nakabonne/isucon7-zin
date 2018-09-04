@@ -413,7 +413,6 @@ func getMessage(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-
 	messages, err := queryMessages(chanID, lastID)
 	if err != nil {
 		return err
@@ -428,6 +427,10 @@ func getMessage(c echo.Context) error {
 	// 	}
 	// 	response = append(response, r)
 	// }
+	rev := make([]Message, 0, len(messages))
+	for i := len(messages) - 1; i >= 0; i-- {
+		rev = append(rev, messages[i])
+	}
 	response, err := jsonifyMessages(messages)
 	if err != nil {
 		return err
