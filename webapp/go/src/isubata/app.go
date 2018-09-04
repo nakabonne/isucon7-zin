@@ -372,9 +372,11 @@ func jsonifyMessages(messages []Message) ([]map[string]interface{}, error) {
 	for i, m := range messages {
 		userIDs[i] = m.UserID
 	}
-	err := db.Get(&users, "SELECT name, display_name, avatar_icon FROM user WHERE id = ?",
-		userIDs)
+	query, args, err := sqlx.In("SELECT name, display_name, avatar_icon FROM user WHERE id = ?", userIDs)
 	if err != nil {
+		return nil, err
+	}
+	if err := db.Select(&users, query, args...); err != nil {
 		return nil, err
 	}
 	// make response
