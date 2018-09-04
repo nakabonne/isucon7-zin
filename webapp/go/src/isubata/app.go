@@ -366,6 +366,9 @@ func postMessage(c echo.Context) error {
 // 	return r, nil
 // }
 func jsonifyMessages(messages []Message) ([]map[string]interface{}, error) {
+	if len(messages) == 0 {
+		return []map[string]interface{}{}, nil
+	}
 	// get users from db
 	var users []*User
 	userIDs := make([]int64, len(messages))
@@ -374,10 +377,10 @@ func jsonifyMessages(messages []Message) ([]map[string]interface{}, error) {
 	}
 	query, args, err := sqlx.In("SELECT name, display_name, avatar_icon FROM user WHERE id = ?", userIDs)
 	if err != nil {
-		return nil, err
+		return []map[string]interface{}{}, err
 	}
 	if err := db.Select(&users, query, args...); err != nil {
-		return nil, err
+		return []map[string]interface{}{}, err
 	}
 	// make response
 	response := make([]map[string]interface{}, 0, len(messages))
