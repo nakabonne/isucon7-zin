@@ -431,7 +431,7 @@ func getMessage(c echo.Context) error {
 	for i := len(messages) - 1; i >= 0; i-- {
 		rev = append(rev, messages[i])
 	}
-	response, err := jsonifyMessages(messages)
+	response, err := jsonifyMessages(rev)
 	if err != nil {
 		return err
 	}
